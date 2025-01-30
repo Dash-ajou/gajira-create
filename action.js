@@ -107,7 +107,7 @@ module.exports = class {
     await Promise.all(
       subtask_titles.map(async ({prefix, origin, summary}) => {
         const issue = await this.Jira.createIssue({
-          project: projectKey,
+          project: {key: projectKey},
           issuetype: {name: "Subtask"},
           summary
         });
