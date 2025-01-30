@@ -113,9 +113,11 @@ module.exports = class {
     await Promise.all(
       subtask_titles.map(async ({prefix, origin, summary}) => {
         const issue = await this.Jira.createIssue({
-          project: {key: projectKey},
-          issuetype: {name: "Subtask"},
-          summary
+          fields: {
+            project: {key: projectKey},
+            issuetype: {name: "Subtask"},
+            summary
+          }
         });
 
         desc.replace(origin, `${prefix} ${issue.key}`);
