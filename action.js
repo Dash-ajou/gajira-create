@@ -98,8 +98,8 @@ module.exports = class {
             summary: v[0].replace(/[(\- \[\])(\- \[ \])(\- \[x\])(\n)]/g, ""),
             loc: v.index
           };
-          v.prefix = a.origin.replace(` ${a.summary}`, "");
-          return v;
+          a.prefix = a.origin.replace(` ${a.summary}`, "");
+          return a;
         });
 
     if (subtask_titles.length == 0) return desc;
