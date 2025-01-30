@@ -55,10 +55,13 @@ module.exports = class {
     }]
 
     if (argv.description) {
+      const new_description = await this.createSubtask(projectKey, argv.description);
+
       providedFields.push({
         key: 'description',
-        value: argv.description,
+        value: new_description,
       })
+
     }
 
     if (argv.fields) {
@@ -85,5 +88,34 @@ module.exports = class {
       key: fieldKey,
       value: fields[fieldKey],
     }))
+  }
+
+  async createSubtask(projectKey, desc) {
+    const subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
+        .map(v => {
+          const a = {
+            origin: v[0],
+            summary: v[0].replace(/[(\- \[\])(\- \[ \])(\- \[x\])(\n)]/g, ""),
+            loc: v.index
+          };
+          v.prefix = a.origin.replace(` ${a.summary}`, "");
+          return v;
+        });
+
+    if (subtask_titles.length == 0) return desc;
+
+    await Promise.all(
+      subtask_titles.map(async ({prefix, origin, summary}) => {
+        const issue = await this.Jira.createIssue({
+          project: projectKey,
+          issuetype: {name: "Subtask"},
+          summary
+        });
+
+        desc.replace(origin, `${prefix} ${issue.key}`);
+        return true;
+      })
+    )
+    return desc;
   }
 }
