@@ -99,16 +99,16 @@ module.exports = class {
 
   async createSubtask(projectKey, issueKey, desc) {
     const subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
-        .map(v => {
-          const a = {
-            origin: v[0],
-            summary: v[0].replace(/[(\-\s\[\])(\-\s\[ \])(\-\s\[x\])(\n)]/g, ""),
-            loc: v.index
-          };
-          console.log(`subtask detected: ${a.summary}`);
-          a.prefix = a.origin.replace(` ${a.summary}`, "");
-          return a;
-        });
+      .map(v => {
+        const a = {
+          origin: v[0],
+          summary: v[0].replace(/^\s*-\s*\[(x|\s)?\]\s*/, "").trim(),
+          loc: v.index
+        };
+        console.log(`subtask detected: ${a.summary}`);
+        a.prefix = a.origin.replace(` ${a.summary}`, "");
+        return a;
+      });
 
     if (subtask_titles.length == 0) return desc;
 
