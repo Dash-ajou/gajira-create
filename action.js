@@ -55,13 +55,10 @@ module.exports = class {
     }]
 
     if (argv.description) {
-      const new_description = await this.createSubtask(projectKey, argv.description);
-
       providedFields.push({
         key: 'description',
-        value: new_description,
+        value: argv.description,
       })
-
     }
 
     if (argv.fields) {
@@ -77,8 +74,18 @@ module.exports = class {
     })
 
     const issue = await this.Jira.createIssue(payload)
+    const issueKey = issue.key;
+    console.log(`issue created: ${issueKey}`);
 
-    return { issue: issue.key }
+    if (!argv?.description) return { issue: issueKey }
+
+    // subtask sync
+    const new_description = await this.createSubtask(projectKey, issueKey, argv.description);
+    payload.fields.description = new_description;
+    await this.Jira.updateIssue(issueKey, payload);
+    console.log(`sbutask sync complete: ${issueKey}`);
+
+    return issueKey;
   }
 
   transformFields (fieldsString) {
@@ -90,7 +97,7 @@ module.exports = class {
     }))
   }
 
-  async createSubtask(projectKey, desc) {
+  async createSubtask(projectKey, issueKey, desc) {
     const subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
         .map(v => {
           const a = {
@@ -110,7 +117,8 @@ module.exports = class {
           fields: {
             project: {key: projectKey},
             issuetype: {name: "Subtask"},
-            summary
+            summary,
+            parent: {key: issueKey}
           }
         });
 

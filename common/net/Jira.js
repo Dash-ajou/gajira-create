@@ -21,6 +21,12 @@ class Jira {
       { method: 'POST', body })
   }
 
+  async updateIssue (issueId, body) {
+    return this.fetch('updateIssue',
+      { pathname: `/rest/api/2/issue/${issueId}` },
+      { method: 'PUT', body })
+  }
+
   async getIssue (issueId, query = {}) {
     const { fields = [], expand = [] } = query
 
