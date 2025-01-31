@@ -91,7 +91,7 @@ module.exports = class {
     await this.Jira.updateIssue(issueKey, payload);
     console.log(`sbutask sync complete: ${issueKey}`);
 
-    return issueKey;
+    return { issue: issueKey };
   }
 
   transformFields (fieldsString) {
@@ -111,6 +111,7 @@ module.exports = class {
             summary: v[0].replace(/[(\- \[\])(\- \[ \])(\- \[x\])(\n)]/g, ""),
             loc: v.index
           };
+          console.log(`subtask detected: ${a.summary}`);
           a.prefix = a.origin.replace(` ${a.summary}`, "");
           return a;
         });
@@ -127,8 +128,9 @@ module.exports = class {
             parent: {key: issueKey}
           }
         });
+        console.log(`subtask created: ${origin} -> ${issue.key}`);
 
-        desc.replace(origin, `${prefix} ${issue.key}`);
+        desc = desc.replace(origin, `${prefix} ${issue.key}`);
         return true;
       })
     )
