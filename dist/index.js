@@ -108,7 +108,7 @@ module.exports = class {
         .map(v => {
           const a = {
             origin: v[0],
-            summary: v[0].replace(/[(\- \[\])(\- \[ \])(\- \[x\])(\n)]/g, ""),
+            summary: v[0].replace(/[(\-\s\[\])(\-\s\[ \])(\-\s\[x\])(\n)]/g, ""),
             loc: v.index
           };
           console.log(`subtask detected: ${a.summary}`);
@@ -128,9 +128,9 @@ module.exports = class {
             parent: {key: issueKey}
           }
         });
-        console.log(`subtask created: ${origin} -> ${issue.key}`);
+        console.log(`subtask created: "${origin}" -> "${prefix} ${issue.key}"\n`);
 
-        desc = desc.replace(origin, `${prefix} ${issue.key}`);
+        desc = desc.replace(origin, `${prefix} ${issue.key}\n`);
         return true;
       })
     )
