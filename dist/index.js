@@ -136,13 +136,19 @@ module.exports = class {
           }
         });
         console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
-        desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}`);
+        desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}\n`);
         return true;
       })
     )
     return desc;
   }
-  getCurrentDateTime(date = new Date()) {
+  getCurrentDateTime(date) {
+    if (!date) {
+      date = new Date();
+      const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+      const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
+      date = new Date(utc + (KR_TIME_DIFF));
+    }
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
