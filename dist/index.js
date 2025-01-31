@@ -108,7 +108,7 @@ module.exports = class {
       .map(v => {
         const a = {
           origin: v[0],
-          summary: v[0].replace(/^\s*-\s*\[(x|\s)?\]\s*/, "").trim(),
+          summary: v[0].replace(/^\s*-\s*\[(x|\s)?\]\s*/, "").replace(/\n+$/, "").trim(),
           loc: v.index
         };
         console.log(`subtask detected: ${a.summary}`);
@@ -125,16 +125,32 @@ module.exports = class {
             project: {key: projectKey},
             issuetype: {name: "Subtask"},
             summary,
+            description: `
+              h2. 하위 작업: ${ summary }
+              
+              h3. 작업이력
+              - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ issueKey }
+
+            `,
             parent: {key: issueKey}
           }
         });
-        console.log(`subtask created: "${origin}" -> "${prefix} ${issue.key}"\n`);
-
-        desc = desc.replace(origin, `${prefix} ${issue.key}\n`);
+        console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
+        desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}`);
         return true;
       })
     )
     return desc;
+  }
+  getCurrentDateTime(date = new Date()) {
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   }
 }
 
