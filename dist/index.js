@@ -136,7 +136,7 @@ module.exports = class {
     if (subtask_titles.length == 0) return desc;
 
     await Promise.all(
-      subtask_titles.map(async ({prefix, origin, summary}) => {
+      subtask_titles.map(async ({prefix, origin, summary}, i) => {
         const subissue_body = { fields: {
           project: {key: projectKey},
           issuetype: {name: "Subtask"},
@@ -151,6 +151,13 @@ module.exports = class {
 
         `;
         if (assignee) subissue_body.fields.assignee = { id: assignee };
+
+        // 동시요청 지연
+        await (async () => new Promise((resolve, _) => {
+          setTimeout(() => {
+            resolve(true);
+          }, 200 * i);
+        }))()
 
         const issue = await this.Jira.createIssue(subissue_body);
         console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
