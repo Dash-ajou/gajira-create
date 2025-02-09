@@ -61,6 +61,23 @@ module.exports = class {
       })
     }
 
+    let assignee_id;
+    if (argv.assignee) {
+      const user_list = await this.getUserList();
+      if (user_list[argv.assignee]) {
+        console.log(`User assign: ${argv.assignee} | ${user_list[argv.assignee]}`);
+
+        assignee_id = user_list[argv.assignee];
+        providedFields.push({
+          key: 'assignee',
+          value: { 'id': assignee_id },
+        })
+
+      } else {
+        console.log(`User assign ignored: USER_NOT_FOUND on ${Object.keys( user_list )}`);
+      }
+    }
+
     if (argv.fields) {
       providedFields = [...providedFields, ...this.transformFields(argv.fields)]
     }
@@ -80,7 +97,7 @@ module.exports = class {
     if (!argv?.description) return { issue: issueKey }
 
     // subtask sync
-    const new_description = await this.createSubtask(projectKey, issueKey, argv.description);
+    const new_description = await this.createSubtask(projectKey, issueKey, argv.description, assignee_id);
     payload.fields.description = new_description;
     await this.Jira.updateIssue(issueKey, payload);
     console.log(`sbutask sync complete: ${issueKey}`);
@@ -97,7 +114,7 @@ module.exports = class {
     }))
   }
 
-  async createSubtask(projectKey, issueKey, desc) {
+  async createSubtask(projectKey, issueKey, desc, assignee) {
     const subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
       .map(v => {
         const a = {
@@ -114,21 +131,22 @@ module.exports = class {
 
     await Promise.all(
       subtask_titles.map(async ({prefix, origin, summary}) => {
-        const issue = await this.Jira.createIssue({
-          fields: {
-            project: {key: projectKey},
-            issuetype: {name: "Subtask"},
-            summary,
-            description: `
-              h2. 하위 작업: ${ summary }
-              
-              h3. 작업이력
-              - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ issueKey }
+        const subissue_body = { fields: {
+          project: {key: projectKey},
+          issuetype: {name: "Subtask"},
+          summary,
+          parent: {key: issueKey}
+        } };
+        subissue_body.fields.description = `
+          h2. 하위 작업: ${ summary }
+          
+          h3. 작업이력
+          - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ issueKey }
 
-            `,
-            parent: {key: issueKey}
-          }
-        });
+        `;
+        if (assignee) subissue_body.fields.assignee = { id: assignee };
+
+        const issue = await this.Jira.createIssue(subissue_body);
         console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
         desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}\n`);
         return true;
@@ -136,6 +154,15 @@ module.exports = class {
     )
     return desc;
   }
+
+  async getUserList() {
+    const raw_userinfos = await this.Jira.getUserList();
+    return raw_userinfos.map(userinfo => ({
+      [userinfo.displayName]: userinfo.accountId
+    }))
+    .reduce((a, b) => ({ ...a, ...b }), ({}));
+  }
+
   getCurrentDateTime(date) {
     if (!date) {
       date = new Date();

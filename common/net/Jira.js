@@ -27,6 +27,12 @@ class Jira {
       { method: 'PUT', body })
   }
 
+  async getUserList() {
+    return this.fetch('getUserList',
+      { pathname: `/rest/api/2/users/search` },
+      { method: 'GET' })
+  }
+
   async getIssue (issueId, query = {}) {
     const { fields = [], expand = [] } = query
 
